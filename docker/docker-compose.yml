@@ -1,0 +1,24 @@
+version: '2'
+services:
+   wildfly:
+      privileged: true
+      restart: always
+      image: marceloweb/wildfly-admin:1.0
+      ports:
+         - "8080:8080"
+         - "9990:9990"
+      volumes:
+         - ./drivers:/opt/jboss/wildfly/modules/system/layers/base/com/mysql:rw
+         - ./datasources/standalone/configuration/standalone.xml:/opt/jboss/wildfly/standalone/configuration/standalone.xml:rw
+         - ./deployments:/opt/jboss/wildfly/standalone/deployments:rw
+      links:
+         - db
+   db:
+      privileged: true
+      image: mariadb
+      restart: always
+      ports:
+         - "3306:3306"
+      environment:
+         MYSQL_ROOT_PASSWORD: root
+         MYSQL_DATABASE: ./databases/demo.sql
