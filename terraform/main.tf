@@ -2,79 +2,94 @@ provider "aws" {
   region = "us-east-1"
 }
 
-resource "aws_instance" "example" {
-  
-  ami = "ami-66506c1c"
+data "aws_availability_zones" "all" {}
+
+resource "aws_autoscaling_group" "example" {
+  launch_configuration = "${aws_launch_configuration.example.id}"
+  availability_zones = ["${data.aws_availability_zones.all.names}"]
+
+  min_size = 2
+  max_size = 10
+
+  load_balancers = ["${aws_elb.example.name}"]
+  health_check_type = "ELB"
+
+  tag {
+    key = "Name"
+    value = "terraform-asg-example"
+    propagate_at_launch = true
+  }
+}
+
+resource "aws_launch_configuration" "example" {
+
+  image_id = "ami-66506c1c"
   instance_type = "t2.micro"
-  vpc_security_group_ids = ["${aws_security_group.instance.id}",, "${aws_security_group.ssh.id}", "${aws_security_group.all_outgoing.id}"]
+  security_groups = ["${aws_security_group.instance.id}"]
 
   user_data = <<-EOF
               #!/bin/bash
-              apt-get update -y &
-              apt-get install ruby -y &
-              gem install --no-document puppet &
-              apt-get install wildfly -y &
-              service wildfly start &
+              echo "Hello, World" > index.html
+              nohup busybox httpd -f -p "${var.server_port}" &
               EOF
 
-  tags {
-    Name = "terraform-example"
+  lifecycle {
+    create_before_destroy = true
   }
 }
 
 resource "aws_security_group" "instance" {
   name = "terraform-example-instance"
 
+  # Inbound HTTP from anywhere
   ingress {
     from_port = "${var.server_port}"
     to_port = "${var.server_port}"
     protocol = "tcp"
     cidr_blocks = ["0.0.0.0/0"]
   }
-}
 
-resource "aws_iam_user" "user" {
-  name = "test-user"
-  path = "/"
-}
-
-resource "aws_iam_user_ssh_key" "user" {
-  username   = "${aws_iam_user.user.name}"
-  encoding   = "SSH"
-  public_key = "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQD3F6tyPEFEzV0LX3X8BsXdMsQz1x2cEikKDEY0aIj41qgxMCP/iteneqXSIFZBp5vizPvaoIR3Um9xK7PGoW8giupGn+EPuxIA4cDM4vzOqOkiMPhz5XK0whEjkVzTo4+S0puvDZuwIsdiW9mxhJc7tgBNL0cYlWSYVkz4G/fslNfRPW5mYAM49f4fhtxPb5ok4Q2Lg9dPKVHO/Bgeu5woMc7RY0p1ej6D4CKFE6lymSDJpW0YHX/wqE9+cfEauh7xZcG0q9t2ta6F6fmX0agvpFyZo8aFbXeUBr7osSCJNgvavWbM/06niWrOvYX2xwWdhXmXSrbX8ZbabVohBK41 mytest@mydomain.com"
-}
-
-resource "aws_security_group" "ssh" {
-  name = "ssh"
-  description = "Allow all ssh traffic"
-  vpc_id = ""
-
-  ingress {
-      from_port = 22
-      to_port = 22
-      protocol = "tcp"
-      cidr_blocks = ["0.0.0.0/0"]
-  }
-
-  tags {
-    Name = "ssh"
+  lifecycle {
+    create_before_destroy = true
   }
 }
 
-resource "aws_security_group" "all_outgoing" {
-  name = "all_outgoing"
-  description = "Allow all outgoing traffic"
-  vpc_id = ""
+resource "aws_elb" "example" {
+  name = "terraform-asg-example"
+  security_groups = ["${aws_security_group.elb.id}"]
+  availability_zones = ["${data.aws_availability_zones.all.names}"]
+
+  health_check {
+    healthy_threshold = 2
+    unhealthy_threshold = 2
+    timeout = 3
+    interval = 30
+    target = "HTTP:${var.server_port}/"
+  }
+
+  listener {
+    lb_port = 80
+    lb_protocol = "http"
+    instance_port = "${var.server_port}"
+    instance_protocol = "http"
+  }
+}
+
+resource "aws_security_group" "elb" {
+  name = "terraform-example-elb"
 
   egress {
-      from_port = 0
-      to_port = 0
-      protocol = "-1"
-      cidr_blocks = ["0.0.0.0/0"]
+    from_port = 0
+    to_port = 0
+    protocol = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
   }
 
-    tags {
-    Name = "all_outgoing"
+  ingress {
+    from_port = 80
+    to_port = 80
+    protocol = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
   }
-
 }
+
