@@ -1,9 +1,12 @@
+## configure the aws provider
 provider "aws" {
   region = "us-east-1"
 }
 
+## declare the data source
 data "aws_availability_zones" "all" {}
 
+## 
 resource "aws_autoscaling_group" "example" {
   launch_configuration = "${aws_launch_configuration.example.id}"
   availability_zones = ["${data.aws_availability_zones.all.names}"]
