@@ -1,65 +1,47 @@
-## configure the aws provider
+### configure the aws provider
 provider "aws" {
   region = "us-east-1"
 }
 
-## declare the data source
+### declare the data source
 data "aws_availability_zones" "all" {}
 
-## 
-resource "aws_autoscaling_group" "example" {
-  launch_configuration = "${aws_launch_configuration.example.id}"
+### declare the auto scaling groups - allows access to the list of aws asg
+resource "aws_autoscaling_group" "demo" {
+  launch_configuration = "${aws_launch_configuration.demo.id}"
   availability_zones = ["${data.aws_availability_zones.all.names}"]
 
   min_size = 2
   max_size = 10
 
-  load_balancers = ["${aws_elb.example.name}"]
+  load_balancers = ["${aws_elb.demo.name}"]
   health_check_type = "ELB"
 
   tag {
     key = "Name"
-    value = "terraform-asg-example"
+    value = "terraform-asg-demo"
     propagate_at_launch = true
   }
 }
 
-resource "aws_launch_configuration" "example" {
+### provides information about a launch configuration
+resource "aws_launch_configuration" "demo" {
 
   image_id = "ami-66506c1c"
   instance_type = "t2.micro"
-  security_groups = ["${aws_security_group.instance.id}"]
+  security_groups = ["${aws_security_group.demo.id}"]
 
-  user_data = <<-EOF
-              #!/bin/bash
-              echo "Hello, World" > index.html
-              nohup busybox httpd -f -p "${var.server_port}" &
-              EOF
+  user_data = "${file("install.sh")}"
+  key_name = "demo"
 
   lifecycle {
     create_before_destroy = true
   }
 }
 
-resource "aws_security_group" "instance" {
-  name = "terraform-example-instance"
-
-  # Inbound HTTP from anywhere
-  ingress {
-    from_port = "${var.server_port}"
-    to_port = "${var.server_port}"
-    protocol = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-
-  lifecycle {
-    create_before_destroy = true
-  }
-}
-
-resource "aws_elb" "example" {
-  name = "terraform-asg-example"
-  security_groups = ["${aws_security_group.elb.id}"]
+### provides an elastic load balancer resource
+resource "aws_elb" "demo" {
+  name = "terraform-asg-demo"
   availability_zones = ["${data.aws_availability_zones.all.names}"]
 
   health_check {
@@ -78,8 +60,24 @@ resource "aws_elb" "example" {
   }
 }
 
-resource "aws_security_group" "elb" {
-  name = "terraform-example-elb"
+### provides details about a specific security group
+resource "aws_security_group" "demo" {
+  name = "terraform-demo"
+
+  # Inbound HTTP from anywhere
+  ingress {
+    from_port = "${var.server_port}"
+    to_port = "${var.server_port}"
+    protocol = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  ingress {
+    from_port = 22
+    to_port = 22
+    protocol = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
 
   egress {
     from_port = 0
@@ -88,11 +86,7 @@ resource "aws_security_group" "elb" {
     cidr_blocks = ["0.0.0.0/0"]
   }
 
-  ingress {
-    from_port = 80
-    to_port = 80
-    protocol = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
+  lifecycle {
+    create_before_destroy = true
   }
 }
-
