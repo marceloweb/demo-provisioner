@@ -31,7 +31,7 @@ resource "aws_launch_configuration" "demo" {
   instance_type = "t2.micro"
   security_groups = ["${aws_security_group.demo.id}"]
 
-  user_data = "${file("install.sh")}"
+  user_data = "${file("wildfly-install.sh")}"
   key_name = "demo"
 
   lifecycle {
@@ -68,6 +68,13 @@ resource "aws_security_group" "demo" {
   ingress {
     from_port = "${var.server_port}"
     to_port = "${var.server_port}"
+    protocol = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  ingress {
+    from_port = 9990
+    to_port = 9990
     protocol = "tcp"
     cidr_blocks = ["0.0.0.0/0"]
   }
