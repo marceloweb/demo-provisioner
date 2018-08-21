@@ -1,1 +1,1 @@
-deployments/*
+docker/deployments/java-demo.war.deployed
