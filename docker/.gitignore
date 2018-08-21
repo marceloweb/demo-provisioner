@@ -1,3 +1,1 @@
-datasources/standalone/data/
-datasources/standalone/log/
-datasources/standalone/configuration/standalone_xml_history/
+deployments/*
