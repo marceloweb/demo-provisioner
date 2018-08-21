@@ -1,9 +1,13 @@
-#!/bin/sh
-set -e -x
-export DEBIAN_FRONTEND=noninteractive
+#!/bin/bash
 
-wget https://apt.puppetlabs.com/puppet-release-trusty.deb
-dpkg -i puppetlabs-release-trusty.deb
+sudo apt-get update -y
+sudo apt-get install default-jdk -y
+sudo apt-get install tar -y
 
-apt-get -y update
-apt-get -y install puppet-common=2.7.19-1puppetlabs1
+cd /opt
+sudo wget http://download.jboss.org/wildfly/10.0.0.Final/wildfly-10.0.0.Final.tar.gz
+sudo mv wildfly-10.0.0.Final wildfly
+sudo chmod -R 755 wildfly
+cd wildfly/bin
+
+sudo ./standalone.sh

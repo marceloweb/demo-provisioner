@@ -5,49 +5,63 @@ VAGRANT_API_VERSION = "2"
 
 Vagrant.configure(VAGRANT_API_VERSION) do |config|
   
-  # boxes at https://vagrantcloud.com/search.
+  ## boxes at https://vagrantcloud.com/search.
   config.vm.box = "ubuntu/trusty64"
-
-  if Vagrant.has_plugin?("vagrant-librarian-puppet")
-  	config.librarian_puppet.puppetfile_dir = "librarian"
-  end
 
   if Vagrant.has_plugin?("vagrant-cachier")
     	config.cache.scope = :box
   end
 
+  ## memory
   config.vm.provider :virtualbox do |vb|
     	vb.customize ["modifyvm", :id, "--memory", "1024"]
   end
 
+  ## data of the aws
   config.vm.provider :aws do |aws, override|
+
+	override.vm.box = "dummy"
+
     	aws.access_key_id = ENV['AWS_ACCESS_KEY_ID']
     	aws.secret_access_key = ENV['AWS_SECRET_ACCESS_KEY']
     	aws.keypair_name = ENV['AWS_KEYPAIR_NAME']
 
-    	aws.ami = "ami-a18c8fc8"
-    	aws.user_data = File.read("bootstrap.sh")
+    	aws.ami = "ami-66506c1c"
 	aws.region = "us-east-1"
 	aws.instance_type = "t2.micro"
     	aws.subnet_id = ENV['AWS_SUBNET_ID']
 
-    	override.vm.box = "dummy"
-    	override.ssh.username = "ubuntu"
-    	override.ssh.private_key_path = ENV['AWS_PRIVATE_KEY_PATH']
+	override.ssh.username = "ubuntu"
+        override.ssh.private_key_path = ENV['AWS_PRIVATE_KEY_PATH']
   end
 
+  ## 
   config.vm.define :web do |web_config|
+
     	web_config.vm.hostname = "web"
-    	web_config.vm.network :private_network, :ip => "192.168.33.10"
+	web_config.vm.network :private_network, :ip => "192.168.33.10"
     
 	web_config.vm.provider :aws do |aws|
-      		aws.private_ip_address = "192.168.33.12"
+		aws.private_ip_address = "192.168.33.10"
       		aws.tags = { 'Name' => 'Web' }
     	end
     	
-	web_config.vm.provision "puppet" do |puppet|
-      		puppet.module_path = ["modules", "modules"]
-      		puppet.manifest_file = "web.pp"
-    	end
   end
+
+  config.vm.provision "shell", inline: <<-SHELL
+    add-apt-repository ppa:openjdk-r/ppa -y
+    apt-get update
+    echo "\n----- Installing Apache and Java 8 ------\n"
+    apt-get -y install apache2 openjdk-8-jdk
+    update-alternatives --config java
+    cd /opt
+    wget http://download.jboss.org/wildfly/10.0.0.Final/wildfly-10.0.0.Final.tar.gz
+    tar -xvzf wildfly-10.0.0.Final.tar.gz
+    mv wildfly-10.0.0.Final wildfly
+    chmod -R 755 wildfly
+    cd wildfly/bin
+
+    ./standalone.sh &
+
+  SHELL
 end
