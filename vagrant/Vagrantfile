@@ -60,8 +60,6 @@ Vagrant.configure(VAGRANT_API_VERSION) do |config|
     mv wildfly-10.0.0.Final wildfly
     chmod -R 755 wildfly
     cd wildfly/bin
-
-    ./standalone.sh &
-
+    ./standalone.sh 
   SHELL
 end
