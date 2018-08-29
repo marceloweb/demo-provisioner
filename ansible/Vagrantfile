@@ -7,10 +7,6 @@ Vagrant.configure(VAGRANT_API_VERSION) do |config|
   
   config.vm.box = "ubuntu/xenial64"
 
-  if Vagrant.has_plugin?("vagrant-librarian-puppet")
-    	config.librarian_puppet.puppetfile_dir = "librarian"
-  end
-
   if Vagrant.has_plugin?("vagrant-cachier")
     	config.cache.scope = :box
   end
@@ -46,19 +42,9 @@ Vagrant.configure(VAGRANT_API_VERSION) do |config|
 	web_config.vm.provider :aws do |aws|
       		aws.tags = { 'Name' => 'Web' }
     	end
-	web_config.vm.provision "puppet" do |puppet|
-     		puppet.manifest_file = "web.pp"
+	web_config.vm.provision "ansible" do |ansible|
+		ansible.playbook = "playbook.yml"
     	end
   end
-
-  config.vm.provision "shell", inline: <<-SHELL
-     apt-get install openjdk-8-jdk -y
-     cd /tmp
-     wget http://apt.puppet.com/puppetlabs-release-pc1-xenial.deb
-     dpkg -i puppetlabs-release-pc1-xenial.deb
-
-     apt-get -y update
-     apt-get -y install puppet-common
-  SHELL
 
 end
