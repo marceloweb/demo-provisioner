@@ -47,7 +47,8 @@ Vagrant.configure(VAGRANT_API_VERSION) do |config|
       		aws.tags = { 'Name' => 'Web' }
     	end
 	web_config.vm.provision "puppet" do |puppet|
-     		puppet.manifest_file = "web.pp"
+     		puppet.manifest_file = "wildfly.pp"
+		puppet.manifest_file = "tomcat.pp"
     	end
   end
 
