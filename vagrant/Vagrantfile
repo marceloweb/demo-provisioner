@@ -42,14 +42,6 @@ Vagrant.configure(VAGRANT_API_VERSION) do |config|
 
     	web_config.vm.hostname = "web"
 	web_config.vm.network :private_network, :ip => "192.168.33.10"
-        web_config.vm.network :forwarded_port, host: 9994, guest: 9994
-
-        # ... the wildfly server ...
-        web_config.vm.network :forwarded_port, host: 8080, guest: 8080
-
-        # ... and the PostgreSQL Server.
-        web_config.vm.network :forwarded_port, host: 5432, guest: 15432
-
 
 	web_config.vm.provider :aws do |aws|
       		aws.tags = { 'Name' => 'Web' }
@@ -60,12 +52,11 @@ Vagrant.configure(VAGRANT_API_VERSION) do |config|
   end
 
   config.vm.provision "shell", inline: <<-SHELL
+     apt-get update -y
      apt-get install openjdk-8-jdk -y
      cd /tmp
      wget http://apt.puppet.com/puppetlabs-release-pc1-xenial.deb
      dpkg -i puppetlabs-release-pc1-xenial.deb
-
-     apt-get -y update
      apt-get -y install puppet-common
   SHELL
 
