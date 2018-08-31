@@ -12,7 +12,7 @@ exec {'install_wildfly':
      tar xzf /tmp/${wildfly_package} -C ${wildfly_dir};
      /bin/chown -R ${wildfly_user}:${wildfly_group} ${wildfly_dir};
      /bin/chmod -R 755 ${wildfly_dir};
-     /opt/wildfly/wildfly-13.0.0.Final/bin/standalone.sh -b 0.0.0.0 &;",
+     /opt/wildfly/wildfly-13.0.0.Final/bin/standalone.sh -b 0.0.0.0;",
   provider => 'shell',
   path => ['/usr/local/sbin','/usr/local/bin','/usr/sbin','/usr/bin','/sbin','/bin'],
   timeout => '14400',
