@@ -1,2 +1,8 @@
 terraform.*
 vagrant/.vagrant
+vagrant/deployments/*.deployed
+*.swap
+*.swp
+*.log
+vagrant/*.log
+ansible/*.log
