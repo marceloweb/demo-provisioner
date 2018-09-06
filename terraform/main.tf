@@ -7,14 +7,14 @@ provider "aws" {
 data "aws_availability_zones" "all" {}
 
 ### declare the auto scaling groups - allows access to the list of aws asg
-resource "aws_autoscaling_group" "java-demo" {
-  launch_configuration = "${aws_launch_configuration.java-demo.id}"
+resource "aws_autoscaling_group" "demo" {
+  launch_configuration = "${aws_launch_configuration.demo.id}"
   availability_zones = ["${data.aws_availability_zones.all.names}"]
 
   min_size = 2
   max_size = 10
 
-  load_balancers = ["${aws_elb.java-demo.name}"]
+  load_balancers = ["${aws_elb.demo.name}"]
   health_check_type = "ELB"
 
   tag {
@@ -25,14 +25,14 @@ resource "aws_autoscaling_group" "java-demo" {
 }
 
 ### provides information about a launch configuration
-resource "aws_launch_configuration" "java-demo" {
+resource "aws_launch_configuration" "demo" {
 
   image_id = "ami-66506c1c"
   instance_type = "t2.micro"
-  security_groups = ["${aws_security_group.java-demo.id}"]
+  security_groups = ["${aws_security_group.demo.id}"]
 
   user_data = "${file("wildfly-install.sh")}"
-  key_name = "java-demo"
+  key_name = "demo"
 
   lifecycle {
     create_before_destroy = true
@@ -40,7 +40,7 @@ resource "aws_launch_configuration" "java-demo" {
 }
 
 ### provides an elastic load balancer resource
-resource "aws_elb" "java-demo" {
+resource "aws_elb" "demo" {
   name = "terraform-asg-demo"
   availability_zones = ["${data.aws_availability_zones.all.names}"]
 
@@ -61,20 +61,13 @@ resource "aws_elb" "java-demo" {
 }
 
 ### provides details about a specific security group
-resource "aws_security_group" "java-demo" {
+resource "aws_security_group" "demo" {
   name = "terraform-demo"
 
   # Inbound HTTP from anywhere
   ingress {
     from_port = "${var.server_port}"
     to_port = "${var.server_port}"
-    protocol = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-
-  ingress {
-    from_port = 9990
-    to_port = 9990
     protocol = "tcp"
     cidr_blocks = ["0.0.0.0/0"]
   }

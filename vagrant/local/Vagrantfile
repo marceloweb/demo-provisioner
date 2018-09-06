@@ -8,7 +8,7 @@ Vagrant.configure(VAGRANT_API_VERSION) do |config|
   config.vm.box = "ubuntu/bionic64"
 
   if Vagrant.has_plugin?("vagrant-librarian-puppet")
-    	config.librarian_puppet.puppetfile_dir = "librarian"
+	config.librarian_puppet.puppetfile_dir = "../librarian"
   end
 
   if Vagrant.has_plugin?("vagrant-cachier")
@@ -29,8 +29,9 @@ Vagrant.configure(VAGRANT_API_VERSION) do |config|
       		aws.tags = { 'Name' => 'Web' }
     	end
 	web_config.vm.provision "puppet" do |puppet|
-     		puppet.manifest_file = "wildfly.pp"
-		web_config.vm.synced_folder "deployments/", "/opt/wildfly/wildfly-13.0.0.Final/standalone/deployments/"
+		puppet.manifests_path = "../manifests"
+		puppet.manifest_file = "wildfly.pp"
+		web_config.vm.synced_folder "../deployments/", "/opt/wildfly/wildfly-13.0.0.Final/standalone/deployments/"
     	end
   end
 

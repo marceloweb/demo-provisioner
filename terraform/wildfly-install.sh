@@ -1,13 +1,11 @@
 #!/bin/bash
 
 sudo apt-get update -y
-sudo apt-get install default-jdk -y
-sudo apt-get install tar -y
+sudo apt-get install openjdk-8-jdk -y
 
-cd /opt
-sudo wget http://download.jboss.org/wildfly/10.0.0.Final/wildfly-10.0.0.Final.tar.gz
-sudo mv wildfly-10.0.0.Final wildfly
-sudo chmod -R 755 wildfly
-cd wildfly/bin
-
-sudo ./standalone.sh
+cd /tmp
+sudo wget http://apt.puppet.com/puppetlabs-release-pc1-xenial.deb
+sudo dpkg -i puppetlabs-release-pc1-xenial.deb
+sudo apt-get -y install puppet-common
+sudo apt-get -y install nginx
+sudo /etc/init.d/nginx start
