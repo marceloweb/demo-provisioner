@@ -1,0 +1,53 @@
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+
+VAGRANT_API_VERSION = "2"
+
+Vagrant.configure(VAGRANT_API_VERSION) do |config|
+  
+  config.vm.box = "dummy"
+
+  if Vagrant.has_plugin?("vagrant-librarian-puppet")
+	config.librarian_puppet.puppetfile_dir = "../librarian"
+  end
+
+  if Vagrant.has_plugin?("vagrant-cachier")
+    	config.cache.scope = :box
+  end
+
+  ## memory
+  config.vm.provider :virtualbox do |vb|
+    	vb.customize ["modifyvm", :id, "--memory", "1024"]
+  end
+
+  config.vm.define "java-demo" do |config|
+
+     config.vm.provider :aws do |aws, override|
+	aws.access_key_id = ENV['AWS_ACCESS_KEY_ID']
+    	aws.secret_access_key = ENV['AWS_SECRET_ACCESS_KEY']
+    	aws.keypair_name = "demo"
+
+    	aws.ami = "ami-b71a87c8"
+
+    	override.ssh.username = "ubuntu"
+    	override.ssh.private_key_path = "~/.ssh/id_rsa"
+
+
+	config.vm.provision "puppet" do |puppet|
+                puppet.manifests_path = "../manifests"
+                puppet.manifest_file = "wildfly.pp"
+                config.vm.synced_folder "../deployments/", "/opt/wildfly/wildfly-13.0.0.Final/standalone/deployments/"
+        end
+     end
+  end
+
+  config.vm.provision "shell", inline: <<-SHELL
+     apt-get update -y
+     apt-get install openjdk-8-jdk -y
+     cd /tmp
+     wget http://apt.puppet.com/puppetlabs-release-pc1-xenial.deb
+     dpkg -i puppetlabs-release-pc1-xenial.deb
+     apt-get -y install puppet-common
+  SHELL
+
+end
