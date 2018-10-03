@@ -7,7 +7,7 @@ resource "digitalocean_droplet" "java-demo" {
   name   = "web-1"
   region = "nyc1"
   size   = "s-1vcpu-1gb"
-  ssh_keys = ["fingerprint"]
+  ssh_keys = ["${var.fingerprint}"]
 
   connection {
     user = "root"
