@@ -17,6 +17,9 @@ resource "digitalocean_droplet" "java-demo" {
   }
 
   provisioner "remote-exec" {
+     source = "manifests/wildfly.pp"
+     destination = "/tmp/wildfly.pp"
+
      inline = [
        "#!/bin/sh",
        "apt-get update -y",
@@ -24,8 +27,10 @@ resource "digitalocean_droplet" "java-demo" {
        "cd /tmp",
        "wget http://apt.puppet.com/puppetlabs-release-pc1-xenial.deb",
        "dpkg -i puppetlabs-release-pc1-xenial.deb",
-       "apt-get -y install puppet-common"
+       "apt-get -y install puppet-common",
+       "puppet apply"
      ]
+     
   }
 }
 
